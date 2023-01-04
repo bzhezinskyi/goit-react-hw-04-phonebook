@@ -1,56 +1,56 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
+
+import Notiflix from 'notiflix';
 
 import ContactForm from './ContactForm/ContactForm';
-import { ContactList } from './ContactList/ContactList';
-import { Filter } from './Filter/Filter';
+import ContactList from './ContactList/ContactList';
+import Filter from './Filter/Filter';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+export default function App() {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    if (
+      localStorage.getItem('Contacts') &&
+      JSON.parse(localStorage.getItem('Contacts')).length !== 0
+    ) {
+      setContacts(JSON.parse(localStorage.getItem('Contacts')));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('Contacts', JSON.stringify(contacts));
+    return;
+  }, [contacts]);
+
+  const hendleSubmaiForm = contact => {
+    setContacts([...contacts, contact]);
   };
 
-  hendleSubmaiForm = contact => {
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, contact],
-    }));
+  const hendleChangeFiltr = event => {
+    setFilter(event.currentTarget.value);
   };
 
-  hendleChangeFiltr = event => {
-    this.setState({ filter: event.currentTarget.value });
+  const deleteContact = contactId => {
+    setContacts(contacts.filter(contact => contact.id !== contactId));
+
+    Notiflix.Notify.success('Deleted from contacts');
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
-  };
+  const normalizeFilter = filter.toLowerCase();
+  const visibleContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(normalizeFilter)
+  );
 
-  render() {
-    const { contacts, filter } = this.state;
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm onSubmitForm={hendleSubmaiForm} contacts={contacts} />
 
-    const normalizeFilter = filter.toLowerCase();
-    const visibleContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizeFilter)
-    );
-
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <ContactForm onSubmitForm={this.hendleSubmaiForm} contacts={contacts} />
-
-        <h2>Contacts</h2>
-        <Filter value={filter} onChange={this.hendleChangeFiltr} />
-        <ContactList
-          contacts={visibleContacts}
-          onDeleteContact={this.deleteContact}
-        />
-      </div>
-    );
-  }
+      <h2>Contacts</h2>
+      <Filter value={filter} onChange={hendleChangeFiltr} />
+      <ContactList contacts={visibleContacts} onDeleteContact={deleteContact} />
+    </div>
+  );
 }
